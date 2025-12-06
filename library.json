@@ -19,7 +19,7 @@
   "license": "MIT",
   "homepage": "",
   "dependencies": {
-    "lowpowerlab/RFM69": "^1.5.2"
+    "lowpowerlab/RFM69": "^1.5.2",
     "nkaaf/List": "^3.0.1"
   },
   "frameworks": "*",
