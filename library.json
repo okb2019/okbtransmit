@@ -1,6 +1,6 @@
 {
   "name": "okbTransmit",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A library to use with rfm69",
   "keywords": "rfm69",
   "repository":
@@ -19,7 +19,8 @@
   "license": "MIT",
   "homepage": "",
   "dependencies": {
-    "ownername/print": "~1.3.0"
+    "lowpowerlab/RFM69": "^1.5.2"
+    "nkaaf/List": "^3.0.1"
   },
   "frameworks": "*",
   "platforms": "*"
