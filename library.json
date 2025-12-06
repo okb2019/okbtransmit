@@ -1,1 +1,26 @@
- 
+{
+  "name": "okbTransmit",
+  "version": "1.0.0",
+  "description": "A library to use with rfm69",
+  "keywords": "rfm69",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/okb2019/okbtransmit.git"
+  },
+  "authors":
+  [
+    {
+      "name": "Olaf Kranz-Backhaus",
+      "email": "o.kranz-backhaus@t-online.de",
+      "url": ""
+    }
+  ],
+  "license": "MIT",
+  "homepage": "",
+  "dependencies": {
+    "ownername/print": "~1.3.0"
+  },
+  "frameworks": "*",
+  "platforms": "*"
+}
