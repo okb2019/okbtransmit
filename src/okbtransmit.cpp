@@ -14,11 +14,12 @@ void sendToNode(RFM69_ATC &radio, List<Payload> &transferListe)
     if (radio.sendWithRetry(myPayload.nodeId, (const void*)(&myPayload), sizeof(Payload)))
     {
       Serial.print(" ok!");
-      transferListe.removeFirst();  // Eintrag aus Liste löschen
+      printPayload(myPayload);
     }
     else 
     {
       Serial.print(" nothing...");
+
       if(myPayload.setNumber == 1 && myPayload.maxSetNumber == 1)
       {
         transferListe.removeFirst();  // Eintrag aus Liste löschen
