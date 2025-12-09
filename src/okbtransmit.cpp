@@ -180,3 +180,25 @@ int combineFromList(List<Payload> &transferListe, char myString[])
   }
   return 0;
 }
+
+void printPayload( Payload &myPayload )
+{
+  Serial.print("NodeID : ");
+  Serial.println(myPayload.nodeId);
+  Serial.print("Max Setnumber : ");
+  Serial.println(myPayload.maxSetNumber);
+  Serial.print("Setnummer");
+  Serial.println(myPayload.setNumber);
+  Serial.print("Zeitstempal");
+  Serial.println(myPayload.sendTime);
+  
+  Serial.print("Nachricht");
+  if(myPayload.setNumber == myPayload.maxSetNumber)
+    Serial.println(myPayload.setNumber);
+  else
+  {
+    for(int lauf = 0; lauf < 50; lauf++)
+      Serial.print(myPayload.nachricht[lauf]);
+    Serial.println();
+  }
+}
