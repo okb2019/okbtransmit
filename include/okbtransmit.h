@@ -18,3 +18,4 @@ bool getRadioData(RFM69_ATC &, List<Payload>&); // return ist, ob der letzte ode
 void deleleAllSameItems(int, unsigned long, List<Payload>& );
 void splitToList( List<Payload>&, int, char[] );
 int combineFromList(List<Payload>&, char[] );  // Ausgangsliste, Ziel Payload return ist die NodeID
+void printPayload( Payload& );
