@@ -1,36 +1,66 @@
 #include "okbtransmit.h"
 
 
-void sendToNode(RFM69_ATC &radio, List<Payload> &transferListe)
+void sendToNode(RFM69_ATC &radio, List<Payload> &transferListe, uint16_t zeitStempel, uint8_t nodeID)
 {
   Payload myPayload;
 //  digitalWrite(NRFTX, HIGH);
   
   if(!transferListe.isEmpty())
   {
-    myPayload = transferListe[0];
+    uint16_t laengeListe = 0;
+    uint16_t lauf = 0;
+    bool fertig = false;
+    uint16_t zaehler = 1;
 
-    Serial.print("Sending struct ");
-    if (radio.sendWithRetry(myPayload.nodeId, (const void*)(&myPayload), sizeof(Payload)))
-    {
-      Serial.print(" ok!");
-      printPayload(myPayload);
-    }
-    else 
-    {
-      Serial.print(" nothing...");
+    laengeListe = transferListe.getSize();
+    Serial.print("searching struct, laenge : ");
+    Serial.println(laengeListe);
+    Serial.print("NodeID : ");
+    Serial.print(nodeID); 
+    Serial.print(" Zeitstempel : ");
+    Serial.println(zeitStempel);
 
-      if(myPayload.setNumber == 1 && myPayload.maxSetNumber == 1)
+    while((lauf < laengeListe) && (fertig == false))
+    {
+      myPayload = transferListe[lauf];
+
+      Serial.print("Akuelle NodeID : ");
+      Serial.print(myPayload.nodeId); 
+      Serial.print(" aktueller Zeitstempel : ");
+      Serial.println(myPayload.sendTime);
+
+      if((myPayload.nodeId == nodeID) && (myPayload.sendTime == zeitStempel))
       {
-        transferListe.removeFirst();  // Eintrag aus Liste löschen
-        Serial.println("Lösche Transfer aus Liste");
+        Serial.print("Seding to Node : ");
+        if (radio.sendWithRetry(myPayload.nodeId, (const void*)(&myPayload), sizeof(Payload)))
+        {
+          Serial.println("ok.");
+          printPayload(myPayload);
+          if(myPayload.setNumber == 1 && myPayload.maxSetNumber == 1)
+            {
+              transferListe.remove(lauf);  // Eintrag aus Liste löschen, wenn es nun diesen einen gibt
+              Serial.println("Lösche Transfer aus Liste");
+              fertig = true;
+            }
+       
+          if(zaehler < myPayload.maxSetNumber)  // alle versendet?
+            zaehler += 1;                        // nein
+          else
+            fertig = true;                      // ja
+        }
+        else 
+        {
+          Serial.println("failed !!");
+          printPayload(myPayload);
+          fertig = true;
+        }
+
       }
-      else
-      {
-        deleleAllSameItems(myPayload.nodeId, myPayload.sendTime, transferListe);   // alle zugehörigen Nachrichten Löschen
-      }
-        
+      lauf += 1;
     }
+
+
   }
 
 //  digitalWrite(NRFTX, LOW);
@@ -87,14 +117,14 @@ void deleleAllSameItems(int nodeID, unsigned long Zeit, List<Payload> &transferL
 }
 
 
-void splitToList( List<Payload>& myTransferList, int myNodeID, char transferString[])
+uint16_t splitToList( List<Payload>& myTransferList, int destNodeID, char transferString[])
 {
   Payload myPayload;
   Serial.print("Payload : ");
   Serial.println(transferString);
   
   uint16_t stringLaenge = strlen(transferString);
-  uint16_t lauf = 0;                              // über den gesamten String
+  uint8_t lauf = 0;                              // über den gesamten String
   uint8_t teiler = sizeof(myPayload.nachricht);   // wie lang darf die Nachrit sein?
   uint8_t Anzahl = stringLaenge / teiler ;        // Anzahl der Pakete - 1
   uint8_t rest = stringLaenge % teiler;          // Anzahl der Zeichen die nach der for Schleife übrig bleiben
@@ -109,26 +139,35 @@ void splitToList( List<Payload>& myTransferList, int myNodeID, char transferStri
   Serial.println(rest);
   
 
-  myPayload.nodeId = myNodeID;
+  myPayload.nodeId = destNodeID;
   myPayload.sendTime = millis();
   myPayload.maxSetNumber = Anzahl +1;
 
-  for(uint8_t lauf = 0; lauf < Anzahl; lauf++)
+  for(lauf = 0; lauf < Anzahl; lauf++)
   {
     strncpy(myPayload.nachricht,transferString + (lauf * 50), 50);
     myPayload.setNumber = lauf +1;
+    Serial.print("Setnummer : ");
+    Serial.println(myPayload.setNumber);
     myTransferList.add(myPayload);
-    //Serial.println(myPayload.nachricht);
+    for(int yy = 0; yy <50; yy++)
+      Serial.print(myPayload.nachricht[yy]);
+    Serial.println();
   }
+  
   if(rest > 0)
   {
     Serial.println(lauf * 50);
     strncpy(myPayload.nachricht,transferString + (lauf * 50), rest);
     myPayload.nachricht[rest] = '\0';
     myPayload.setNumber = lauf +1;
+    Serial.print("Setnummer : ");
+    Serial.println(myPayload.setNumber);
     myTransferList.add(myPayload);
     Serial.println(myPayload.nachricht);
   }  
+
+  return(myPayload.sendTime);
 }
 
 
@@ -145,16 +184,19 @@ int combineFromList(List<Payload> &transferListe, char myString[])
   if(!transferListe.isEmpty())
   {
     Serial.println("Addiere aus Liste :");
-      myPayload = transferListe[transferListe.getSize()-1]; // letztes Element
+      myPayload = transferListe.get(0); // erstes Element
       retNode = myPayload.nodeId;
       if(myPayload.maxSetNumber == 1 && myPayload.setNumber == 1)
       {
         strcpy(myString, myPayload.nachricht);
-        transferListe.removeLast();
+        transferListe.removeFirst();
         return retNode;
       }
       else
       {
+        maxAnzahl = myPayload.maxSetNumber;
+        durchlauf = 1; // über alle 
+        lauf = 0;
         while(durchlauf <= maxAnzahl && lauf < transferListe.getSize())
         {
           myPayload = transferListe[lauf];
@@ -188,14 +230,14 @@ void printPayload( Payload &myPayload )
   Serial.println(myPayload.nodeId);
   Serial.print("Max Setnumber : ");
   Serial.println(myPayload.maxSetNumber);
-  Serial.print("Setnummer");
+  Serial.print("Setnummer : ");
   Serial.println(myPayload.setNumber);
-  Serial.print("Zeitstempal");
+  Serial.print("Zeitstempal : ");
   Serial.println(myPayload.sendTime);
   
-  Serial.print("Nachricht");
+  Serial.print("Nachricht : ");
   if(myPayload.setNumber == myPayload.maxSetNumber)
-    Serial.println(myPayload.setNumber);
+    Serial.println(myPayload.nachricht);
   else
   {
     for(int lauf = 0; lauf < 50; lauf++)

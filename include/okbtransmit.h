@@ -13,9 +13,9 @@ typedef struct {
   char          nachricht[50];   //maximale Nachrichtenlänge
 } Payload;
 
-void sendToNode(RFM69_ATC &, List<Payload>&);
+void sendToNode(RFM69_ATC &, List<Payload>&, uint16_t, uint8_t);
 bool getRadioData(RFM69_ATC &, List<Payload>&); // return ist, ob der letzte oder einzige Part eines Satzes empfangen worden ist
 void deleleAllSameItems(int, unsigned long, List<Payload>& );
-void splitToList( List<Payload>&, int, char[] );
+uint16_t splitToList( List<Payload>&, int, char[] );
 int combineFromList(List<Payload>&, char[] );  // Ausgangsliste, Ziel Payload return ist die NodeID
 void printPayload( Payload& );
